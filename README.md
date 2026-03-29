@@ -30,8 +30,7 @@ Follow these steps to run the project locally:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO
+git clone https://github.com/tsshekwogaza/php-rest-api
 ```
 
 ---
@@ -82,7 +81,7 @@ CREATE TABLE users (
 
 ### 5. Configure Database Connection
 
-Open `db.php` and update if needed:
+Open `config.php` and update if needed:
 
 ```php
 $host = "localhost";
@@ -110,7 +109,7 @@ RewriteRule ^ api.php [QSA,L]
 Open browser:
 
 ```
-http://localhost/YOUR_PROJECT_FOLDER/api/users
+http://localhost/api/users
 ```
 
 ---
@@ -123,7 +122,7 @@ http://localhost/YOUR_PROJECT_FOLDER/api/users
 * URL:
 
 ```
-http://localhost/YOUR_PROJECT_FOLDER/api/users
+http://localhost/api/users
 ```
 
 * Body (JSON):
@@ -183,7 +182,7 @@ DELETE /api/users/1
 ```
 /project-root
 │── api.php        # Main router
-│── db.php         # Database connection
+│── config.php     # Database connection
 │── .htaccess      # URL routing
 ```
 
@@ -200,13 +199,11 @@ DELETE /api/users/1
 ## Future Improvements
 
 * Authentication (JWT)
-* Input sanitization
-* Error handling with HTTP status codes
 * MVC structure
 
 ---
 
 ## Author
 
-Your Name
-GitHub: https://github.com/YOUR_USERNAME
+Timothy Samuel Shekwogaza
+GitHub: https://github.com/tsshekwogaza
