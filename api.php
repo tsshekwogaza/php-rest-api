@@ -1,6 +1,6 @@
 <?php
 
-require 'db.php';
+require 'config.php';
 
 header("Content-Type: application/json");
 
