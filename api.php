@@ -62,8 +62,8 @@ function handleUsers($method, $id) {
 
     } elseif ($method === 'POST') {
         $data = json_decode(file_get_contents("php://input"), true);
-        $name = $data["name"] ?? null;
-        $email = $data["email"] ?? null;
+        $name = trim($data["name"] ?? '');
+        $email = trim($data["email"] ?? '');
 
         if (!$name || !$email) {
             echo json_encode(["error"=> "Name and Email required!"]);
@@ -104,14 +104,9 @@ function handleUsers($method, $id) {
         $stmt->bind_param("ssi", $name, $email, $id);
         $stmt->execute();
 
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-
-        $user['id'] = (int)$user['id'];
-
         if ($stmt->affected_rows > 0) {
             echo json_encode([
-                "id"=> $user,
+                "id"=> (int)$id,
                 "name"=> $name,
                 "email"=> $email
             ]);
