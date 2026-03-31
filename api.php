@@ -17,12 +17,12 @@ switch ($resource) {
         handleUsers($method, $id);
         break;
 
-    case 'products':
-        handleProducts($method, $id);
+    case 'register':
+        handleRegister();
         break;
 
-    case 'orders':
-        handleOrders($method, $id);
+    case 'login':
+        handleLogin();
         break;
 
     default:
@@ -32,6 +32,26 @@ switch ($resource) {
 // Users Handler
 function handleUsers($method, $id) {
     global $conn;
+
+    $token = getBearerToken();
+
+    if (!$token) {
+        echo json_encode(["error" => "Unauthorized!"]);
+        return;
+    }
+
+    // check token in DB
+    $stmt = $conn->prepare("SELECT * FROM users WHERE token = ?");
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $authUser = $result->fetch_assoc();
+
+    if (!$authUser) {
+        echo json_encode(["error"=> "Invalid token"]);
+        return;
+    }
 
     if ($method === 'GET') {
         if ($id) { 
@@ -61,6 +81,7 @@ function handleUsers($method, $id) {
         }
 
     } elseif ($method === 'POST') {
+
         $data = json_decode(file_get_contents("php://input"), true);
         $name = trim($data["name"] ?? '');
         $email = trim($data["email"] ?? '');
@@ -78,7 +99,6 @@ function handleUsers($method, $id) {
                 "message"=> "User created!",
                 "id"=> $stmt->insert_id
             ]);
-
         } else {
             echo json_encode([
                 "error" => "Failed to create user."
@@ -110,7 +130,6 @@ function handleUsers($method, $id) {
                 "name"=> $name,
                 "email"=> $email
             ]);
-
         } else {
             echo json_encode(["error" => "Update failed! User doesn't exist."]);
         }
@@ -129,8 +148,7 @@ function handleUsers($method, $id) {
                 echo json_encode([
                     "message"=> "User was deleted successfully.",
                     "id"=> $id
-                ]);
-                
+                ]); 
             } else {
                 echo json_encode(["error"=> "User doesn't exist!"]);
             }
@@ -138,70 +156,74 @@ function handleUsers($method, $id) {
     }
 }
 
-// Products Handler
-function handleProducts($method, $id) {
+// Register handler
+function handleRegister() {
     global $conn;
-
-    if ($method === 'GET') {
-        if ($id) { 
-            $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-
-            $result = $stmt->get_result();
-            $product = $result->fetch_assoc();
-
-            echo json_encode($product);
-
-            if (!$product) { 
-                echo json_encode(["error"=> "No Product found!"]);
-            }
-
-        } else {
-            $result = $conn->query("SELECT * FROM products");
-
-            $products = [];
-
-            while ($row = $result->fetch_assoc()) {
-                $products[] = $row;
-            }
-
-            echo json_encode($products);
-        }
-
-    } elseif ($method === "POST") {
-        $data = json_decode(file_get_contents("php://input"), true);
         
-        $name = $data["name"] ?? null;
-        $price = $data["price"] ?? null;
+    $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!$name || !$price) {
-            echo json_encode(["error"=> "Name and Price required!"]);
-            return;
-        }
+    $name = trim($data['name'] ?? '');
+    $email = trim($data['email'] ?? '');
+    $password = $data['password'] ?? '';
 
-        $stmt = $conn->prepare("INSERT INTO products (name, price) VALUES (?, ?)");
-        $stmt->bind_param("ss", $name, $price);
+    if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6) {
+        echo json_encode(["error" => "Invalid input"]);
+        return;
+    }
 
-        if ($stmt->execute()) {
-            echo json_encode([
-                "message"=> "Product added!",
-                "id"=> $stmt->insert_id
-            ]);
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-        } else {
-            echo json_encode([
-                "error" => "Failed to add product!"
-            ]);
-        }
+    $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $name, $email, $hashedPassword);
+
+    if ($stmt->execute()) {
+        echo json_encode(["message"=> "User registered!"]);
+    } else {
+        echo json_encode(["error"=> "Registeration failed!"]);
     }
 }
 
-// Orders Handler
-function handleOrders($method, $id) {
+// Login handler
+function handleLogin() {
+    global $conn;
+
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $email = trim($data["email"] ?? '');
+    $password = $data["password"] ?? '';
+
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+
+    if (!$user || !password_verify($password, $user["password"])) {
+        echo json_encode(["error"=> "Invalid credentials!"]);
+        return;
+    }
+
+    // Generate token
+    $token = bin2hex(random_bytes(16));
+
+    // Store token in DB
+    $stmt = $conn->prepare("UPDATE users SET token = ? WHERE id = ?");
+    $stmt->bind_param("si", $token, $user['id']);
+    $stmt->execute();
+
     echo json_encode([
-        "resource"=> "orders",
-        "method"=> $method,
-        "id"=> $id
+        "message"=> "Login successfull.",
+        "token"=> $token
     ]);
+}
+
+function getBearerToken() {
+    $headers = getallheaders();
+
+    if (isset($headers['Authorization'])) {
+        return str_replace('Bearer ','', $headers['Authorization']);
+    }
+
+    return null;
 }

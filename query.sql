@@ -13,3 +13,7 @@ CREATE TABLE products (
     name VARCHAR(100),
     price INT
 );
+
+ALTER TABLE users 
+ADD password VARCHAR(255);
+ADD token VARCHAR(255);

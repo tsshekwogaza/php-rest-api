@@ -1,6 +1,6 @@
 # PHP REST API
 
-A simple REST API built with PHP (LAMP stack) that supports full CRUD operations using MySQL.
+A simple RESTful API built with PHP (LAMP stack) that supports full CRUD operations and token-based authentication using MySQL.
 
 ---
 
@@ -10,6 +10,8 @@ A simple REST API built with PHP (LAMP stack) that supports full CRUD operations
 * MySQL database integration
 * JSON responses
 * Custom routing system
+* Token-based Authentication (Register & Login)
+* Protected routes
 * Input validation
 
 ---
@@ -31,6 +33,7 @@ Follow these steps to run the project locally:
 
 ```bash
 git clone https://github.com/tsshekwogaza/php-rest-api
+cd C:\xampp\htdocs\api>
 ```
 
 ---
@@ -75,6 +78,10 @@ CREATE TABLE users (
     name VARCHAR(100),
     email VARCHAR(100)
 );
+
+ALTER TABLE users 
+ADD password VARCHAR(255),
+ADD token VARCHAR(255);
 ```
 
 ---
@@ -114,7 +121,65 @@ http://localhost/api/users
 
 ---
 
-## API Testing (Using Postman)
+# Authentication Flow
+
+This API uses **token-based authentication**.
+
+---
+
+## Register
+
+**POST** `/api/register`
+
+### Body:
+
+```json
+{
+  "name": "Tim",
+  "email": "tim@test.com",
+  "password": "123456"
+}
+```
+
+---
+
+## Login
+
+**POST** `/api/login`
+
+### Body:
+
+```json
+{
+  "email": "tim@test.com",
+  "password": "123456"
+}
+```
+
+### Response:
+
+```json
+{
+  "message": "Login successful",
+  "token": "your_token_here"
+}
+```
+
+---
+
+## Access Protected Routes
+
+All `/api/users` endpoints require authentication.
+
+### Add Header:
+
+```
+Authorization: Bearer your_token_here
+```
+
+---
+
+# API Endpoints Testing (Using Postman)
 
 ### Create User (POST)
 
@@ -177,6 +242,15 @@ DELETE /api/users/1
 
 ---
 
+# Testing (Using Postman)
+
+1. Register a user
+2. Login → copy token
+3. Add token to headers
+4. Test protected routes
+
+---
+
 ## Project Structure
 
 ```
@@ -193,17 +267,19 @@ DELETE /api/users/1
 * Ensure Apache mod_rewrite is enabled
 * Use Postman or cURL to test endpoints
 * All responses are returned in JSON format
+* Tokens are stored in the database
 
 ---
 
 ## Future Improvements
 
-* Authentication (JWT)
-* MVC structure
+* JWT Authentication
+* Logout system
+* Token expiration
+* MVC architecture
 
 ---
 
 ## Author
 
-Timothy Samuel Shekwogaza
-GitHub: https://github.com/tsshekwogaza
+**Timothy Samuel Shekwogaza** | GitHub: https://github.com/tsshekwogaza
